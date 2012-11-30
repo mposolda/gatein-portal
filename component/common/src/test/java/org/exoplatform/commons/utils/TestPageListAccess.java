@@ -25,6 +25,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
 
+import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
 
 import org.exoplatform.component.test.AbstractGateInTest;
@@ -140,6 +141,53 @@ public class TestPageListAccess extends AbstractGateInTest {
             AssertionFailedError afe = new AssertionFailedError();
             afe.initCause(e);
             throw afe;
+        }
+    }
+
+    public void testCorrectPageListSize() throws Exception {
+        SizeTestPageListAccess testList = new SizeTestPageListAccess(10, "dummy");
+        List<String> current = testList.getPage(1);
+        current.get(0);
+
+        // Page 1 (from index 0 of length 10) should be loaded at this point from underlying lazy List
+        assertEquals(0, testList.lastLoadIndex);
+        assertEquals(10, testList.lastLoadLength);
+
+        // Setting new page size should recreate underlying lazy list
+        testList.setPageSize(6);
+
+        current = testList.getPage(7);
+        current.get(0);
+
+        // Page 7 (from index 36 of length 6) should be loaded at this point from underlying lazy list
+        assertEquals(36, testList.lastLoadIndex);
+        assertEquals(6, testList.lastLoadLength);
+    }
+
+    private static class SizeTestPageListAccess extends PageListAccess<String, String> {
+
+        private int lastLoadIndex = -1;
+        private int lastLoadLength = -1;
+
+        public SizeTestPageListAccess(int pageSize, String state) {
+            super(state, pageSize);
+        }
+
+        @Override
+        protected ListAccess<String> create(String state) {
+            return new ListAccess<String>() {
+
+                public String[] load(int index, int length) {
+                    lastLoadIndex = index;
+                    lastLoadLength = length;
+
+                    return new String[length];
+                }
+
+                public int getSize() {
+                    return 50;
+                }
+            };
         }
     }
 }

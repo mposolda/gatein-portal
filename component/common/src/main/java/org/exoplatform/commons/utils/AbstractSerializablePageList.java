@@ -209,6 +209,14 @@ public abstract class AbstractSerializablePageList<E> extends PageList<E> {
 
     @Override
     public final void setPageSize(int pageSize) {
+        // We should drop underlying lazy list to force it's recreation with new page size
+        lazyList = null;
+        try {
+            pageSizeField.set(this, pageSize);
+        } catch (IllegalAccessException iae) {
+            throw new IllegalStateException(iae);
+        }
+
         ensureCorrectState();
         super.setPageSize(pageSize);
     }
