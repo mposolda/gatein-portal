@@ -207,19 +207,16 @@ public class FacebookProcessor {
 
             facebookPrincipal = new FacebookPrincipal();
             facebookPrincipal.setAccessToken(accessToken);
-            facebookPrincipal.setId(jsonObject.getString("id"));
-            facebookPrincipal.setName(jsonObject.getString("name"));
-            facebookPrincipal.setUsername(jsonObject.getString("username"));
-            facebookPrincipal.setFirstName(jsonObject.getString("first_name"));
-            facebookPrincipal.setLastName(jsonObject.getString("last_name"));
-            facebookPrincipal.setGender(jsonObject.getString("gender"));
-            facebookPrincipal.setTimezone(jsonObject.getString("timezone"));
-            facebookPrincipal.setLocale(jsonObject.getString("locale"));
+            facebookPrincipal.setId(jsonObject.optString("id"));
+            facebookPrincipal.setName(jsonObject.optString("name"));
+            facebookPrincipal.setUsername(jsonObject.optString("username"));
+            facebookPrincipal.setFirstName(jsonObject.optString("first_name"));
+            facebookPrincipal.setLastName(jsonObject.optString("last_name"));
+            facebookPrincipal.setGender(jsonObject.optString("gender"));
+            facebookPrincipal.setTimezone(jsonObject.optString("timezone"));
+            facebookPrincipal.setLocale(jsonObject.optString("locale"));
+            facebookPrincipal.setEmail(jsonObject.optString("email"));
             facebookPrincipal.setJsonObject(jsonObject);
-            if (jsonObject.has("email")) {
-                facebookPrincipal.setName(jsonObject.getString("email"));
-                facebookPrincipal.setEmail(jsonObject.getString("email"));
-            }
         } catch (JSONException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {

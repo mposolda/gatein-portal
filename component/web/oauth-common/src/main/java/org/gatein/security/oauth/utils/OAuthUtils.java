@@ -41,6 +41,7 @@ import org.gatein.security.oauth.exception.OAuthException;
 import org.gatein.security.oauth.exception.OAuthExceptionCode;
 import org.gatein.security.oauth.common.OAuthConstants;
 import org.gatein.security.oauth.common.OAuthPrincipal;
+import org.gatein.security.oauth.facebook.FacebookAccessTokenContext;
 import org.gatein.security.oauth.registry.OAuthProviderTypeRegistry;
 import org.gatein.security.oauth.social.FacebookPrincipal;
 import org.gatein.security.oauth.twitter.TwitterAccessTokenContext;
@@ -52,9 +53,10 @@ public class OAuthUtils {
 
     // Converting objects
 
-    public static OAuthPrincipal<String> convertFacebookPrincipalToOAuthPrincipal(FacebookPrincipal facebookPrincipal, OAuthProviderTypeRegistry registry) {
-        return new OAuthPrincipal<String>(facebookPrincipal.getUsername(), facebookPrincipal.getFirstName(), facebookPrincipal.getLastName(),
-                facebookPrincipal.getAttribute("name"), facebookPrincipal.getEmail(), facebookPrincipal.getAccessToken(),
+    public static OAuthPrincipal<FacebookAccessTokenContext> convertFacebookPrincipalToOAuthPrincipal(FacebookPrincipal facebookPrincipal, OAuthProviderTypeRegistry registry, String scope) {
+        FacebookAccessTokenContext fbAccessTokenContext = new FacebookAccessTokenContext(facebookPrincipal.getAccessToken(), scope);
+        return new OAuthPrincipal<FacebookAccessTokenContext>(facebookPrincipal.getUsername(), facebookPrincipal.getFirstName(), facebookPrincipal.getLastName(),
+                facebookPrincipal.getAttribute("name"), facebookPrincipal.getEmail(), fbAccessTokenContext,
                 registry.getOAuthProvider(OAuthConstants.OAUTH_PROVIDER_KEY_FACEBOOK));
     }
 

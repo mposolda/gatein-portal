@@ -93,7 +93,11 @@ public class OAuthConstants {
 
     public static final String PROFILE_TWITTER_USERNAME = "user.social-info.twitter.userName";
 
-    public static final String PROFILE_FACEBOOK_ACCESS_TOKEN = "user.social-info.facebook.accessToken";
+    // Facebook accessToken could be very long, so we need to split to two attributes
+    public static final String PROFILE_FACEBOOK_ACCESS_TOKEN_1 = "user.social-info.facebook.accessToken.1";
+    public static final String PROFILE_FACEBOOK_ACCESS_TOKEN_2 = "user.social-info.facebook.accessToken.2";
+
+    public static final String PROFILE_FACEBOOK_SCOPE = "user.social-info.facebook.scope";
 
     public static final String PROFILE_GOOGLE_ACCESS_TOKEN = "user.social-info.google.accessToken";
 
@@ -126,6 +130,8 @@ public class OAuthConstants {
 
     public static final String ATTRIBUTE_VERIFICATION_STATE = "_verificationState";
 
+    public static final String ATTRIBUTE_OAUTH_SCOPE = "_oauthScope";
+
     // URL
 
     public static final String FACEBOOK_AUTHENTICATION_URL_PATH = "/facebookAuth";
@@ -138,6 +144,8 @@ public class OAuthConstants {
     // Request parameters
 
     public static final String PARAM_OAUTH_INTERACTION = "_oauthInteraction";
+
+    public static final String PARAM_CUSTOM_SCOPE = "_oauthCustomScope";
 
     public static final String PARAM_OAUTH_INTERACTION_VALUE_START = "start";
 
