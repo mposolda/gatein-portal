@@ -23,6 +23,7 @@
 
 package org.gatein.security.oauth.facebook;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -30,7 +31,7 @@ import java.util.Set;
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  */
-public class FacebookAccessTokenContext {
+public class FacebookAccessTokenContext implements Serializable {
 
     private final String accessToken;
     private final Set<String> scopes = new HashSet<String>();
