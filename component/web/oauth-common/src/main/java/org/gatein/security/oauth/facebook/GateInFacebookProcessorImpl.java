@@ -77,7 +77,7 @@ public class GateInFacebookProcessorImpl implements GateInFacebookProcessor {
                     "clientSecret of your Facebook application");
         }
 
-        this.scope = (scope == null || scope.length() == 0) ? "email" : scope;
+        this.scope = scope == null ? "email" : scope;
 
         if (redirectURL == null || redirectURL.length() == 0) {
             this.redirectURL = "http://localhost:8080/" + context.getName() + OAuthConstants.FACEBOOK_AUTHENTICATION_URL_PATH;
