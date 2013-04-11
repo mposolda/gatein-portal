@@ -105,9 +105,6 @@ public class GateInFacebookProcessorImpl implements GateInFacebookProcessor {
 
     @Override
     public FacebookInteractionState processFacebookAuthInteraction(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException {
-        // Save our current scope as attribute into session
-        httpRequest.getSession().setAttribute(OAuthConstants.ATTRIBUTE_OAUTH_SCOPE, this.scope);
-
         return processFacebookAuthInteractionImpl(httpRequest, httpResponse, this.facebookProcessor);
     }
 

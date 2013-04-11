@@ -105,7 +105,7 @@ public class FacebookFilter extends AbstractSSOInterceptor {
                 log.error("Principal was null. Maybe login modules need to be configured properly.");
             } else {
                 if (log.isTraceEnabled()) {
-                    log.trace("Obtained principal from Facebook authentication: " + principal);
+                    log.trace("Finished Facebook OAuth2 flow with state: " + interactionState);
                     log.trace("Facebook accessToken: " + principal.getAccessToken());
                 }
 

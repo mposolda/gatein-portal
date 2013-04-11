@@ -51,4 +51,13 @@ public class FacebookInteractionState {
     public String getScope() {
         return scope;
     }
+
+    @Override
+    public String toString() {
+        return new StringBuilder("FacebookInteractionState[state=")
+                .append(state)
+                .append(", principal=" + facebookPrincipal)
+                .append(", scope=" + scope)
+                .append("]").toString();
+    }
 }
