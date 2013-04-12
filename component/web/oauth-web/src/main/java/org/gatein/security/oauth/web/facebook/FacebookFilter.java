@@ -38,6 +38,7 @@ import org.gatein.common.logging.LoggerFactory;
 import org.gatein.security.oauth.common.OAuthConstants;
 import org.gatein.security.oauth.common.OAuthPrincipal;
 import org.gatein.security.oauth.data.SocialNetworkService;
+import org.gatein.security.oauth.exception.OAuthException;
 import org.gatein.security.oauth.facebook.FacebookAccessTokenContext;
 import org.gatein.security.oauth.facebook.FacebookInteractionState;
 import org.gatein.security.oauth.facebook.GateInFacebookProcessor;
@@ -89,13 +90,22 @@ public class FacebookFilter extends AbstractSSOInterceptor {
 
         FacebookInteractionState interactionState;
 
-        if (scopeToUse == null) {
-            interactionState = facebookProcessor.processFacebookAuthInteraction(httpRequest, httpResponse);
-        } else {
-            if (log.isTraceEnabled()) {
-                log.trace("Process facebook oauth interaction with scope: " + scopeToUse);
+        try {
+            if (scopeToUse == null) {
+                interactionState = facebookProcessor.processFacebookAuthInteraction(httpRequest, httpResponse);
+            } else {
+                if (log.isTraceEnabled()) {
+                    log.trace("Process facebook oauth interaction with scope: " + scopeToUse);
+                }
+                interactionState = facebookProcessor.processFacebookAuthInteraction(httpRequest, httpResponse, scopeToUse);
             }
-            interactionState = facebookProcessor.processFacebookAuthInteraction(httpRequest, httpResponse, scopeToUse);
+        } catch (OAuthException ex) {
+            log.warn("Error during Facebook OAuth flow: " + ex.getMessage());
+
+            // Save exception to request, it will be processed later on portal side
+            httpRequest.setAttribute(OAuthConstants.ATTRIBUTE_EXCEPTION_OAUTH, ex);
+            chain.doFilter(request, response);
+            return;
         }
 
         if (FacebookProcessor.STATES.FINISH.name().equals(interactionState.getState())) {

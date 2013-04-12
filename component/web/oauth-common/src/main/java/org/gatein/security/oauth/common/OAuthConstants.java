@@ -46,6 +46,8 @@ public class OAuthConstants {
 
     public static final String ERROR_PARAMETER = "error";
 
+    public static final String ERROR_ACCESS_DENIED = "access_denied";
+
     // Used in twitter
     public static final String OAUTH_VERIFIER = "oauth_verifier";
 
@@ -118,7 +120,7 @@ public class OAuthConstants {
 
     public static final String ATTRIBUTE_URL_TO_REDIRECT_AFTER_LINK_SOCIAL_ACCOUNT = "_urlToRedirectAfterLinkSocialAccount";
 
-    public static final String ATTRIBUTE_SOCIAL_NETWORK_PROVIDER_TO_UNLINK = "_socialNetworkProviderToUnlink";
+    public static final String ATTRIBUTE_EXCEPTION_OAUTH = "_oauthException";
 
     public static final String ATTRIBUTE_LINKED_OAUTH_PROVIDER = "_linkedOAuthProviderUsernameAttrName";
 

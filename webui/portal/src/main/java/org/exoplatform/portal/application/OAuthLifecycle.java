@@ -45,6 +45,7 @@ import org.gatein.security.oauth.exception.OAuthException;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 import org.gatein.security.oauth.common.OAuthConstants;
+import org.gatein.security.oauth.exception.OAuthExceptionCode;
 
 /**
  * This lifecycle is used to update WebUI state based on OAuth events from Http filters
@@ -107,6 +108,24 @@ public class OAuthLifecycle implements ApplicationLifecycle<PortalRequestContext
                     gtnOAuthException.getExceptionAttribute(OAuthConstants.EXCEPTION_OAUTH_PROVIDER_NAME)};
             ApplicationMessage appMessage = new ApplicationMessage("UIAccountSocial.msg.failed-link", args, ApplicationMessage.WARNING);
             appMessage.setArgsLocalized(false);
+            uiApp.addMessage(appMessage);
+        }
+
+        // Show message about failed OAuth2 flow
+        gtnOAuthException = (OAuthException)httpSession.getAttribute(OAuthConstants.ATTRIBUTE_EXCEPTION_OAUTH);
+        if (gtnOAuthException != null) {
+            httpSession.removeAttribute(OAuthConstants.ATTRIBUTE_EXCEPTION_OAUTH);
+
+            String key;
+            if (gtnOAuthException.getExceptionCode() == OAuthExceptionCode.EXCEPTION_CODE_USER_DENIED_SCOPE) {
+                key = "UIAccountSocial.msg.access-denied";
+            } else {
+                key = "UIAccountSocial.msg.oauth-error";
+
+                log.error("Unspecified error during OAuth flow", gtnOAuthException);
+            }
+
+            ApplicationMessage appMessage = new ApplicationMessage(key, null, ApplicationMessage.WARNING);
             uiApp.addMessage(appMessage);
         }
     }

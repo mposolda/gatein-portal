@@ -18,12 +18,8 @@
 package org.gatein.security.oauth.social;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.Principal;
 import java.util.ArrayList;
@@ -39,6 +35,8 @@ import javax.servlet.http.HttpSession;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 import org.gatein.security.oauth.common.OAuthConstants;
+import org.gatein.security.oauth.exception.OAuthException;
+import org.gatein.security.oauth.exception.OAuthExceptionCode;
 import org.gatein.security.oauth.facebook.GateInFacebookProcessorImpl;
 import org.gatein.security.oauth.utils.OAuthUtils;
 import org.json.JSONException;
@@ -141,12 +139,15 @@ public class FacebookProcessor {
         return facebookPrincipal;
     }
 
-    protected Principal handleAuthenticationResponse(HttpServletRequest request, HttpServletResponse response) {
+    protected Principal handleAuthenticationResponse(HttpServletRequest request, HttpServletResponse response) throws OAuthException {
         String error = request.getParameter(OAuthConstants.ERROR_PARAMETER);
         if (error != null) {
-            throw new RuntimeException("error:" + error);
+            if (OAuthConstants.ERROR_ACCESS_DENIED.equals(error)) {
+                throw new OAuthException(OAuthExceptionCode.EXCEPTION_CODE_USER_DENIED_SCOPE, error);
+            } else {
+                throw new OAuthException(OAuthExceptionCode.EXCEPTION_UNSPECIFIED, error);
+            }
         } else {
-            String returnUrl = returnURL;
             String authorizationCode = request.getParameter(OAuthConstants.CODE_PARAMETER);
             if (authorizationCode == null) {
                 log.error("Authorization code parameter not found");
