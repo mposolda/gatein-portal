@@ -31,6 +31,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.exoplatform.web.security.AuthenticationRegistry;
 import org.gatein.common.logging.Logger;
@@ -78,11 +79,12 @@ public class FacebookFilter extends AbstractSSOInterceptor {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest)request;
         HttpServletResponse httpResponse = (HttpServletResponse)response;
+        HttpSession session = httpRequest.getSession();
 
         // Restart current state if 'oauthInteraction' param has value 'start'
         String interaction = httpRequest.getParameter(OAuthConstants.PARAM_OAUTH_INTERACTION);
         if (OAuthConstants.PARAM_OAUTH_INTERACTION_VALUE_START.equals(interaction)) {
-            httpRequest.getSession().removeAttribute(FacebookProcessor.FB_AUTH_STATE_SESSION_ATTRIBUTE);
+            session.removeAttribute(FacebookProcessor.FB_AUTH_STATE_SESSION_ATTRIBUTE);
         }
 
         // Possibility to init interaction with custom scope. It's needed when custom portlets want bigger scope then the one available in configuration
@@ -102,9 +104,9 @@ public class FacebookFilter extends AbstractSSOInterceptor {
         } catch (OAuthException ex) {
             log.warn("Error during Facebook OAuth flow: " + ex.getMessage());
 
-            // Save exception to request, it will be processed later on portal side
-            httpRequest.setAttribute(OAuthConstants.ATTRIBUTE_EXCEPTION_OAUTH, ex);
-            chain.doFilter(request, response);
+            // Save exception to session and redirect to portal. Exception will be processed later on portal side
+            session.setAttribute(OAuthConstants.ATTRIBUTE_EXCEPTION_OAUTH, ex);
+            redirectAfterOAuthError(httpRequest, httpResponse);
             return;
         }
 
@@ -122,7 +124,7 @@ public class FacebookFilter extends AbstractSSOInterceptor {
                 OAuthPrincipal<FacebookAccessTokenContext> oauthPrincipal = OAuthUtils.convertFacebookPrincipalToOAuthPrincipal(principal, oAuthProviderTypeRegistry, interactionState.getScope());
 
                 // Remove attribute with state of facebookLogin
-                httpRequest.getSession().removeAttribute(FacebookProcessor.FB_AUTH_STATE_SESSION_ATTRIBUTE);
+                session.removeAttribute(FacebookProcessor.FB_AUTH_STATE_SESSION_ATTRIBUTE);
 
                 if (httpRequest.getRemoteUser() == null) {
                     // Save authenticated OAuthPrincipal to authenticationRegistry in case that we are anonymous user
@@ -165,5 +167,23 @@ public class FacebookFilter extends AbstractSSOInterceptor {
         } else {
             return null;
         }
+    }
+
+
+    protected void redirectAfterOAuthError(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        // Similar code like in OAuthLinkAccountFilter (TODO: move to common superclass?)
+        HttpSession session = request.getSession();
+        String urlToRedirect = (String)session.getAttribute(OAuthConstants.ATTRIBUTE_URL_TO_REDIRECT_AFTER_LINK_SOCIAL_ACCOUNT);
+        if (urlToRedirect == null) {
+            urlToRedirect = request.getContextPath();
+        } else {
+            session.removeAttribute(OAuthConstants.ATTRIBUTE_URL_TO_REDIRECT_AFTER_LINK_SOCIAL_ACCOUNT);
+        }
+
+        if (log.isTraceEnabled()) {
+            log.trace("Will redirect user to URL: " + urlToRedirect);
+        }
+
+        response.sendRedirect(response.encodeRedirectURL(urlToRedirect));
     }
 }
