@@ -68,6 +68,7 @@
     <module name="org.jdom"/>
     <module name="org.slf4j"/>
     <module name="org.staxnav"/>
+    <module name="org.twitter4j" export="true"/>
     <module name="com.google.apis" export="true"/>
     <module name="com.google.guava" export="true"/>
 

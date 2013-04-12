@@ -158,7 +158,6 @@
       <maven-resource group="org.jgroups" artifact="jgroups"/>
       <maven-resource group="org.jibx" artifact="jibx-bind"/>
       <maven-resource group="org.jibx" artifact="jibx-run"/>
-      <maven-resource group="org.twitter4j" artifact="twitter4j-core"/>
       <maven-resource group="rhino" artifact="js"/>
       <maven-resource group="org.jsecurity" artifact="jsecurity"/>
       <maven-resource group="caja" artifact="json_simple"/>
@@ -274,6 +273,10 @@
 
     <module-def name="org.staxnav">
       <maven-resource group="org.staxnav" artifact="staxnav.core"/>
+    </module-def>
+
+    <module-def name="org.twitter4j">
+      <maven-resource group="org.twitter4j" artifact="twitter4j-core"/>
     </module-def>
 
     <module-def name="javax.portlet.api">
