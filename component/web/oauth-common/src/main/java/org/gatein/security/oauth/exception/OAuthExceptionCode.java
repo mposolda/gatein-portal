@@ -47,6 +47,17 @@ public enum OAuthExceptionCode {
      */
     EXCEPTION_CODE_TWITTER_ERROR,
 
+
+    /**
+     * Some error during Facebook processing
+     */
+    EXCEPTION_CODE_FACEBOOK_ERROR,
+
+    /**
+     * Some error during Google processing
+     */
+    EXCEPTION_CODE_GOOGLE_ERROR,
+
     /**
      * Error when bad access token is given as parameter
      */
@@ -56,11 +67,6 @@ public enum OAuthExceptionCode {
      * Error when state parameter from request parameter, which is sent from OAuth provider, is not equals to previously sent state
      */
     EXCEPTION_CODE_INVALID_STATE,
-
-    /**
-     * Some error during Google processing
-     */
-    EXCEPTION_CODE_GOOGLE_ERROR,
 
     /**
      * Error when revoking of accessToken of any provider failed
