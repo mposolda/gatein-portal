@@ -147,18 +147,16 @@ public class OAuthUtils {
      * @param connection
      * @return whole HTTP response as String
      */
-    public static String readUrlContent(URLConnection connection) {
+    public static String readUrlContent(URLConnection connection) throws IOException {
         StringBuilder result = new StringBuilder();
-        try {
-            Reader reader = new InputStreamReader(connection.getInputStream());
-            char[] buffer = new char[50];
-            int nrOfChars;
-            while ((nrOfChars = reader.read(buffer)) != -1) {
-                result.append(buffer, 0, nrOfChars);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+
+        Reader reader = new InputStreamReader(connection.getInputStream());
+        char[] buffer = new char[50];
+        int nrOfChars;
+        while ((nrOfChars = reader.read(buffer)) != -1) {
+            result.append(buffer, 0, nrOfChars);
         }
+
         return result.toString();
     }
 

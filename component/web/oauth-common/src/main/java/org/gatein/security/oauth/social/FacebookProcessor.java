@@ -113,7 +113,13 @@ public class FacebookProcessor {
 
             URLConnection connection = sendAccessTokenRequest(authorizationCode);
 
-            Map<String, String> params = OAuthUtils.formUrlDecode(OAuthUtils.readUrlContent(connection));
+            Map<String, String> params;
+            try {
+                params = OAuthUtils.formUrlDecode(OAuthUtils.readUrlContent(connection));
+            } catch (IOException ioe) {
+                throw new OAuthException(OAuthExceptionCode.EXCEPTION_CODE_FACEBOOK_ERROR, ioe);
+            }
+
             String accessToken = params.get(OAuthConstants.ACCESS_TOKEN_PARAMETER);
             String expires = params.get(FacebookConstants.EXPIRES);
 
