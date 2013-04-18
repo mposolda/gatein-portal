@@ -163,7 +163,7 @@ public class UIAccountSocial extends UIForm {
                             ApplicationMessage appMessage = new ApplicationMessage("UIAccountSocial.msg.failed-revoke", null, ApplicationMessage.WARNING);
                             appMessage.setArgsLocalized(false);
                             uiApp.addMessage(appMessage);
-                            log.warn("Revocation of accessToken failed for user " + userName + ". Details: " + t.getMessage());
+                            log.warn("Revocation of accessToken failed for user " + userName + ". Details: " + t.getClass() + ": " + t.getMessage());
                         } else {
                             throw oe;
                         }
