@@ -119,6 +119,11 @@ public class TwitterProcessorImpl implements TwitterProcessor {
             } else {
                 String verifier = request.getParameter(OAuthConstants.OAUTH_VERIFIER);
 
+                // User denied scope
+                if (request.getParameter(OAuthConstants.OAUTH_DENIED) != null) {
+                    throw new OAuthException(OAuthExceptionCode.EXCEPTION_CODE_USER_DENIED_SCOPE, "User denied scope on Twitter authorization page");
+                }
+
                 // Obtain accessToken from twitter
                 AccessToken accessToken = twitter.getOAuthAccessToken(requestToken, verifier);
 

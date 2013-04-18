@@ -53,6 +53,8 @@ public class OAuthConstants {
     // Used in twitter
     public static final String OAUTH_VERIFIER = "oauth_verifier";
 
+    public static final String OAUTH_DENIED = "denied";
+
     // Properties from configuration.properties
 
     public static final String PROPERTY_FACEBOOK_ENABLED = "gatein.oauth.facebook.enabled";

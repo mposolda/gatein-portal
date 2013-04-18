@@ -197,16 +197,26 @@ public class GoogleProcessorImpl implements GoogleProcessor {
                     + stateFromSession + ", stateFromRequest=" + stateFromRequest);
         }
 
-        String code = request.getParameter(OAuthConstants.CODE_PARAMETER);
+        // Check if user didn't permit scope
+        String error = request.getParameter(OAuthConstants.ERROR_PARAMETER);
+        if (error != null) {
+            if (OAuthConstants.ERROR_ACCESS_DENIED.equals(error)) {
+                throw new OAuthException(OAuthExceptionCode.EXCEPTION_CODE_USER_DENIED_SCOPE, error);
+            } else {
+                throw new OAuthException(OAuthExceptionCode.EXCEPTION_UNSPECIFIED, error);
+            }
+        } else {
+            String code = request.getParameter(OAuthConstants.CODE_PARAMETER);
 
-        GoogleTokenResponse tokenResponse = new GoogleAuthorizationCodeTokenRequest(TRANSPORT, JSON_FACTORY, clientID,
-                clientSecret, code, redirectURL).execute();
+            GoogleTokenResponse tokenResponse = new GoogleAuthorizationCodeTokenRequest(TRANSPORT, JSON_FACTORY, clientID,
+                    clientSecret, code, redirectURL).execute();
 
-        if (log.isTraceEnabled()) {
-            log.trace("Successfully obtained accessToken from google: " + tokenResponse);
+            if (log.isTraceEnabled()) {
+                log.trace("Successfully obtained accessToken from google: " + tokenResponse);
+            }
+
+            return tokenResponse;
         }
-
-        return tokenResponse;
     }
 
 
