@@ -26,6 +26,7 @@ package org.gatein.security.oauth.web.facebook;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.gatein.security.oauth.common.AccessTokenContext;
 import org.gatein.security.oauth.common.InteractionState;
 import org.gatein.security.oauth.common.OAuthConstants;
 import org.gatein.security.oauth.common.OAuthPrincipal;
@@ -75,5 +76,29 @@ public class FacebookFilter extends OAuthProviderFilter<FacebookAccessTokenConte
 
             return oauthPrincipal;
         }
+    }
+
+    @Override
+    protected String obtainCustomScopeIfAvailable(HttpServletRequest httpRequest) {
+        String customScope = super.obtainCustomScopeIfAvailable(httpRequest);
+
+        // We need to remove "installed"
+        if (customScope != null) {
+            StringBuilder result = new StringBuilder();
+            String[] scopes = customScope.split(AccessTokenContext.DELIMITER);
+            boolean first = true;
+            for (String scope : scopes) {
+                if (!scope.equals("installed")) {
+                    if (!first) {
+                        result.append(AccessTokenContext.DELIMITER);
+                    }
+                    first = false;
+                    result.append(scope);
+                }
+            }
+            customScope = result.toString();
+        }
+
+        return customScope;
     }
 }
