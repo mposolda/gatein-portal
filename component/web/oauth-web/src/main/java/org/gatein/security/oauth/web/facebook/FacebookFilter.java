@@ -71,7 +71,7 @@ public class FacebookFilter extends OAuthProviderFilter<FacebookAccessTokenConte
             }
 
             OAuthPrincipal<FacebookAccessTokenContext> oauthPrincipal = OAuthUtils.convertFacebookPrincipalToOAuthPrincipal(
-                    principal, getOAuthProvider(), accessTokenContext.getAccessToken());
+                    principal, getOAuthProvider(), accessTokenContext);
 
             return oauthPrincipal;
         }

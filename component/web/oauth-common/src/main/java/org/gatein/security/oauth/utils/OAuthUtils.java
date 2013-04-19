@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -56,8 +57,7 @@ public class OAuthUtils {
     // Converting objects
 
     public static OAuthPrincipal<FacebookAccessTokenContext> convertFacebookPrincipalToOAuthPrincipal(FacebookPrincipal facebookPrincipal,
-                                            OAuthProviderType<FacebookAccessTokenContext> facebookProviderType, String scope) {
-        FacebookAccessTokenContext fbAccessTokenContext = new FacebookAccessTokenContext(facebookPrincipal.getAccessToken(), scope);
+                                            OAuthProviderType<FacebookAccessTokenContext> facebookProviderType, FacebookAccessTokenContext fbAccessTokenContext) {
         return new OAuthPrincipal<FacebookAccessTokenContext>(facebookPrincipal.getUsername(), facebookPrincipal.getFirstName(), facebookPrincipal.getLastName(),
                 facebookPrincipal.getAttribute("name"), facebookPrincipal.getEmail(), fbAccessTokenContext, facebookProviderType);
     }
@@ -147,17 +147,27 @@ public class OAuthUtils {
      * @param connection
      * @return whole HTTP response as String
      */
-    public static String readUrlContent(URLConnection connection) throws IOException {
+    public static HttpResponseContext readUrlContent(URLConnection connection) throws IOException {
         StringBuilder result = new StringBuilder();
 
-        Reader reader = new InputStreamReader(connection.getInputStream());
+        HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
+        int statusCode = httpURLConnection.getResponseCode();
+
+        Reader reader;
+        try {
+            reader = new InputStreamReader(connection.getInputStream());
+        } catch (IOException ioe) {
+            reader = new InputStreamReader(httpURLConnection.getErrorStream());
+        }
+
         char[] buffer = new char[50];
         int nrOfChars;
         while ((nrOfChars = reader.read(buffer)) != -1) {
             result.append(buffer, 0, nrOfChars);
         }
 
-        return result.toString();
+        String response = result.toString();
+        return new HttpResponseContext(statusCode, response, null);
     }
 
     /**

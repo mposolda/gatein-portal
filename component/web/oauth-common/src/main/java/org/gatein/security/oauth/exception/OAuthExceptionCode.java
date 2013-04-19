@@ -59,9 +59,14 @@ public enum OAuthExceptionCode {
     EXCEPTION_CODE_GOOGLE_ERROR,
 
     /**
-     * Error when bad access token is given as parameter
+     * Error when we have invalid or revoked access token
      */
-    EXCEPTION_CODE_BAD_ACCESS_TOKEN,
+    EXCEPTION_CODE_ACCESS_TOKEN_ERROR,
+
+    /**
+     * Generic IO error (for example network error)
+     */
+    EXCEPTION_CODE_UNSPECIFIED_IO_ERROR,
 
     /**
      * Error when state parameter from request parameter, which is sent from OAuth provider, is not equals to previously sent state
