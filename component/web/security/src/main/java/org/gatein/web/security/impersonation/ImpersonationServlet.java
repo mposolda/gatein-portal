@@ -42,6 +42,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Enumeration;
 
 /**
@@ -78,6 +79,13 @@ public class ImpersonationServlet extends AbstractHttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        try {
+            // We set the character encoding now to UTF-8 before obtaining parameters
+            req.setCharacterEncoding("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            log.error("Encoding not supported", e);
+        }
+
         String action = req.getParameter(PARAM_ACTION);
         if (action == null) {
             log.error("Parameter '" + PARAM_ACTION + "' not provided");
@@ -183,7 +191,6 @@ public class ImpersonationServlet extends AbstractHttpServlet {
                 String attrName = (String)attrNames.nextElement();
                 Object attrValue = session.getAttribute(attrName);
 
-                // Backup attribute and clear old
                 String backupAttrName =  BACKUP_ATTR_PREFIX + attrName;
                 session.setAttribute(backupAttrName, attrValue);
                 session.removeAttribute(attrName);
@@ -283,14 +290,12 @@ public class ImpersonationServlet extends AbstractHttpServlet {
             while (attrNames.hasMoreElements()) {
                 String attrName = (String)attrNames.nextElement();
 
-                // Remove attribute of impersonated user
                 if (!attrName.startsWith(BACKUP_ATTR_PREFIX)) {
                     session.removeAttribute(attrName);
                     if (log.isTraceEnabled()) {
                         log.trace("Removed attribute: " + attrName);
                     }
                 } else {
-                    // Restore attribute as it's one of the attributes of admin user, which was backup-ed
                     Object attrValue = session.getAttribute(attrName);
 
                     String restoredAttributeName = attrName.substring(prefixLength);
@@ -307,11 +312,9 @@ public class ImpersonationServlet extends AbstractHttpServlet {
 
     // Register given conversationState into ConversationRegistry. Key will be current Http session
     private void registerConversationState(HttpServletRequest req, ConversationState conversationState) {
-        // Obtain stateKey of current HttpSession
         HttpSession httpSession = req.getSession();
         StateKey stateKey = new HttpSessionStateKey(httpSession);
 
-        // Update conversationRegistry
         ConversationRegistry conversationRegistry = (ConversationRegistry)getContainer().getComponentInstanceOfType(ConversationRegistry.class);
         conversationRegistry.register(stateKey, conversationState);
     }

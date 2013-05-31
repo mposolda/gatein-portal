@@ -258,7 +258,7 @@ public class UIListUsers extends UISearch {
                 return;
             }
 
-            // Redirect to finish login with new user
+            // RedirectURL to impersonation
             PortalRequestContext portalRequestContext = Util.getPortalRequestContext();
             SiteKey siteKey = portalRequestContext.getSiteKey();
             NodeURL currentNodeURL = portalRequestContext.createURL(NodeURL.TYPE);
