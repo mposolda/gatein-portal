@@ -20,6 +20,7 @@
 package org.exoplatform.organization.webui.component;
 
 import org.exoplatform.commons.serialization.api.annotations.Serialized;
+import org.exoplatform.portal.webui.register.UIRegisterInputSet;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.Query;
 import org.exoplatform.services.organization.User;
@@ -143,7 +144,17 @@ public class UIAccountEditInputSet extends UIFormInputSet {
             uiApp.addMessage(new ApplicationMessage("UIAccountInputSet.msg.email-exist", args, ApplicationMessage.WARNING));
             return false;
         }
-        service.getUserHandler().saveUser(user, true);
+
+        try {
+            service.getUserHandler().saveUser(user, true);
+        } catch (Exception e) {
+            Object[] args = { e.getMessage() };
+            ApplicationMessage message = new ApplicationMessage("UIAccountInputSet.msg.user-persist-error", args, ApplicationMessage.WARNING);
+            message.setArgsLocalized(false);
+            uiApp.addMessage(message);
+            return false;
+        }
+
         enableChangePassword(false);
 
         ConversationState state = ConversationState.getCurrent();

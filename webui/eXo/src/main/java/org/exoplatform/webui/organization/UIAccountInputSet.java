@@ -119,7 +119,22 @@ public class UIAccountInputSet extends UIFormInputWithActions {
                 return false;
             }
 
-            service.getUserHandler().createUser(user, true);
+            try {
+                service.getUserHandler().createUser(user, true);
+            } catch (Exception e) {
+                Object[] args = { e.getMessage() };
+                ApplicationMessage message = new ApplicationMessage("UIAccountInputSet.msg.user-persist-error", args, ApplicationMessage.WARNING);
+                message.setArgsLocalized(false);
+                uiApp.addMessage(message);
+
+                // User could be partially created. So we will try to remove him
+                if (service.getUserHandler().findUserByName(username) != null) {
+                    service.getUserHandler().removeUser(username, true);
+                }
+
+                return false;
+            }
+
             reset();
             return true;
         }
