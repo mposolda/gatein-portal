@@ -183,7 +183,22 @@ public class UIRegisterInputSet extends UIFormInputWithActions {
         User user = userHandler.createUserInstance(username);
         bindingFields(user);
 
-        userHandler.createUser(user, true);// Broadcast user creaton event
+        try {
+            userHandler.createUser(user, true);// Broadcast user creation event
+        } catch (Exception e) {
+            Object[] args = { e.getMessage() };
+            ApplicationMessage message = new ApplicationMessage("UIAccountInputSet.msg.user-persist-error", args, ApplicationMessage.WARNING);
+            message.setArgsLocalized(false);
+            uiApp.addMessage(message);
+
+            // User could be partially created. So we will try to remove him
+            if (userHandler.findUserByName(username) != null) {
+                userHandler.removeUser(username, true);
+            }
+
+            return false;
+        }
+
         reset();// Reset the input form
 
         // save user as attribute to WebuiRequestContext for later use

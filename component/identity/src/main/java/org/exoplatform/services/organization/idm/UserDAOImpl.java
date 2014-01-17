@@ -610,7 +610,7 @@ public class UserDAOImpl extends AbstractDAOImpl implements UserHandler {
             listener.postSetEnabled(user);
     }
 
-    public void persistUserInfo(User user, IdentitySession session, boolean isNew) {
+    public void persistUserInfo(User user, IdentitySession session, boolean isNew) throws Exception {
         orgService.flush();
 
         AttributesManager am = session.getAttributesManager();
@@ -659,8 +659,16 @@ public class UserDAOImpl extends AbstractDAOImpl implements UserHandler {
                 try {
                     am.updatePassword(session.getPersistenceManager().findUser(user.getUserName()), user.getPassword());
                 } catch (Exception e) {
-                    handleException("Cannot update password: " + user.getUserName() + "; ", e);
+                    handleException("Cannot update password of user: " + user.getUserName() + "; ", e);
 
+                    // Attempt to find real cause of password-update error
+                    Throwable t = e;
+                    while (t.getCause() != null && t.getCause()!=t && t.getCause().getMessage() != null && t.getCause().getMessage().length() > 0) {
+                        t = t.getCause();
+                    }
+
+                    // In case of failed password update, we will rethrow exception to UI layer
+                    throw new Exception("Cannot update password of user: " + user.getUserName() + ". Cause: " + t.getMessage(), t);
                 }
             }
         }

@@ -106,7 +106,18 @@ public class UIAccountChangePass extends UIForm {
             }
             user.setPassword(newPass);
             uiApp.addMessage(new ApplicationMessage("UIAccountChangePass.msg.change.pass.success", null));
-            service.getUserHandler().saveUser(user, true);
+
+            try {
+                service.getUserHandler().saveUser(user, true);
+            } catch (Exception e) {
+                Object[] args = { e.getMessage() };
+                ApplicationMessage message = new ApplicationMessage("UIAccountInputSet.msg.user-persist-error", args, ApplicationMessage.WARNING);
+                message.setArgsLocalized(false);
+                uiApp.addMessage(message);
+                return;
+            }
+
+
             uiForm.reset();
             event.getRequestContext().addUIComponentToUpdateByAjax(uiForm);
             UIAccountSetting ui = uiForm.getParent();
