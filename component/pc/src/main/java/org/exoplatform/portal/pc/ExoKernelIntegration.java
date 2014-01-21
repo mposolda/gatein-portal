@@ -22,6 +22,7 @@ package org.exoplatform.portal.pc;
 import org.exoplatform.commons.utils.PropertyManager;
 import org.exoplatform.container.ExoContainer;
 import org.exoplatform.container.ExoContainerContext;
+import org.exoplatform.portal.pc.aspects.ImpersonationAwareInvalidatorInterceptor;
 import org.exoplatform.portal.pc.aspects.PortletLifecyclePhaseInterceptor;
 import org.exoplatform.services.resources.ResourceBundleService;
 import org.gatein.common.logging.Logger;
@@ -121,7 +122,7 @@ public class ExoKernelIntegration implements Startable, WebAppListener {
         bridgepInterceptor.setNext(ccppInterceptor);
         ProducerCacheInterceptor producerCacheInterceptor = new ProducerCacheInterceptor();
         producerCacheInterceptor.setNext(bridgepInterceptor);
-        SessionInvalidatorInterceptor sessionInvalidatorInterceptor = new SessionInvalidatorInterceptor();
+        ImpersonationAwareInvalidatorInterceptor sessionInvalidatorInterceptor = new ImpersonationAwareInvalidatorInterceptor();
         sessionInvalidatorInterceptor.setNext(producerCacheInterceptor);
         ContextDispatcherInterceptor contextDispatcherInterceptor = new ContextDispatcherInterceptor();
         contextDispatcherInterceptor.setNext(sessionInvalidatorInterceptor);

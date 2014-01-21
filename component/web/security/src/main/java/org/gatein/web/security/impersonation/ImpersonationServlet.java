@@ -25,6 +25,7 @@ package org.gatein.web.security.impersonation;
 
 import org.exoplatform.container.web.AbstractHttpServlet;
 import org.exoplatform.portal.config.UserACL;
+import org.exoplatform.portal.pc.aspects.ImpersonationAwareInvalidatorInterceptor;
 import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.organization.User;
 import org.exoplatform.services.security.Authenticator;
@@ -36,6 +37,9 @@ import org.exoplatform.services.security.StateKey;
 import org.exoplatform.services.security.web.HttpSessionStateKey;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
+import org.gatein.wci.ServletContainerFactory;
+import org.gatein.wci.session.SessionTask;
+import org.gatein.wci.session.SessionTaskVisitor;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -186,19 +190,37 @@ public class ImpersonationServlet extends AbstractHttpServlet {
     protected void backupAndClearCurrentSession(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
         if (session != null) {
-            Enumeration attrNames = session.getAttributeNames();
-            while (attrNames.hasMoreElements()) {
-                String attrName = (String)attrNames.nextElement();
-                Object attrValue = session.getAttribute(attrName);
+            String sessionId = session.getId();
 
-                String backupAttrName =  BACKUP_ATTR_PREFIX + attrName;
-                session.setAttribute(backupAttrName, attrValue);
-                session.removeAttribute(attrName);
+            // Backup attributes in sessions of portal and all portlet applications
+            ServletContainerFactory.getServletContainer().visit(new SessionTaskVisitor(sessionId, new SessionTask(){
 
-                if (log.isTraceEnabled()) {
-                    log.trace("Finished backup of attribute: " + attrName);
+                @Override
+                public boolean executeTask(HttpSession session) {
+                    if (log.isTraceEnabled()) {
+                        log.trace("Starting with backup attributes for context: " + session.getServletContext().getContextPath());
+                    }
+
+                    Enumeration attrNames = session.getAttributeNames();
+                    while (attrNames.hasMoreElements()) {
+                        String attrName = (String)attrNames.nextElement();
+                        Object attrValue = session.getAttribute(attrName);
+
+                        String backupAttrName =  BACKUP_ATTR_PREFIX + attrName;
+                        session.setAttribute(backupAttrName, attrValue);
+                        session.removeAttribute(attrName);
+
+                        if (log.isTraceEnabled()) {
+                            log.trace("Finished backup of attribute: " + attrName);
+                        }
+                    }
+
+                    // Set attribute with impersonation state (needed for ImpersonationAwareInvalidatorInterceptor)
+                    session.setAttribute(ImpersonationAwareInvalidatorInterceptor.ATTR_IMPERSONATION_STATE, ImpersonationAwareInvalidatorInterceptor.STATE_IN_PROGRESS);
+                    return true;
                 }
-            }
+
+            }));
         }
     }
 
@@ -283,30 +305,59 @@ public class ImpersonationServlet extends AbstractHttpServlet {
     protected void restoreOldSessionAttributes(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
         if (session != null) {
-            int prefixLength = BACKUP_ATTR_PREFIX.length();
+            String sessionId = session.getId();
 
-            // Remove all session attributes of current (impersonated) user. Restore attributes of admin user
-            Enumeration attrNames = session.getAttributeNames();
-            while (attrNames.hasMoreElements()) {
-                String attrName = (String)attrNames.nextElement();
+            // Restore attributes in sessions of portal and all portlet applications
+            ServletContainerFactory.getServletContainer().visit(new SessionTaskVisitor(sessionId, new SessionTask(){
 
-                if (!attrName.startsWith(BACKUP_ATTR_PREFIX)) {
-                    session.removeAttribute(attrName);
+                @Override
+                public boolean executeTask(HttpSession session) {
                     if (log.isTraceEnabled()) {
-                        log.trace("Removed attribute: " + attrName);
+                        log.trace("Starting with restoring attributes for context: " + session.getServletContext().getContextPath());
                     }
-                } else {
-                    Object attrValue = session.getAttribute(attrName);
 
-                    String restoredAttributeName = attrName.substring(prefixLength);
-                    session.setAttribute(restoredAttributeName, attrValue);
-                    session.removeAttribute(attrName);
+                    int prefixLength = BACKUP_ATTR_PREFIX.length();
 
-                    if (log.isTraceEnabled()) {
-                        log.trace("Finished restore of attribute: " + attrName);
+                    // Iteration 1 -- Remove all session attributes of current (impersonated) user.
+                    Enumeration attrNames = session.getAttributeNames();
+                    while (attrNames.hasMoreElements()) {
+                        String attrName = (String)attrNames.nextElement();
+
+                        if (!attrName.startsWith(BACKUP_ATTR_PREFIX)) {
+                            session.removeAttribute(attrName);
+                            if (log.isTraceEnabled()) {
+                                log.trace("Removed attribute: " + attrName);
+                            }
+                        }
                     }
+
+                    // Iteration 2 -- Restore all session attributes of admin user
+                    attrNames = session.getAttributeNames();
+                    while (attrNames.hasMoreElements()) {
+                        String attrName = (String)attrNames.nextElement();
+
+                        if (attrName.startsWith(BACKUP_ATTR_PREFIX)) {
+                            Object attrValue = session.getAttribute(attrName);
+
+                            String restoredAttributeName = attrName.substring(prefixLength);
+                            session.setAttribute(restoredAttributeName, attrValue);
+                            session.removeAttribute(attrName);
+
+                            if (log.isTraceEnabled()) {
+                                log.trace("Finished restore of attribute: " + attrName);
+                            }
+                        } else {
+                            log.warn("Concurrent edit of session. Removing attribute " + attrName);
+                            session.removeAttribute(attrName);
+                        }
+                    }
+
+                    // Set attribute with impersonation state (needed for ImpersonationAwareInvalidatorInterceptor)
+                    session.setAttribute(ImpersonationAwareInvalidatorInterceptor.ATTR_IMPERSONATION_STATE, ImpersonationAwareInvalidatorInterceptor.STATE_FINISHED);
+                    return true;
                 }
-            }
+
+            }));
         }
     }
 

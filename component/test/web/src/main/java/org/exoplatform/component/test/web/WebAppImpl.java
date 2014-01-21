@@ -24,6 +24,7 @@ import java.io.InputStream;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpSession;
 
 import org.gatein.common.NotYetImplemented;
 import org.gatein.wci.WebApp;
@@ -74,7 +75,7 @@ public class WebAppImpl implements WebApp {
         throw new NotYetImplemented();
     }
 
-    public boolean invalidateSession(String sessId) {
+    public HttpSession getHttpSession(String sessId) {
         throw new NotYetImplemented();
     }
 
