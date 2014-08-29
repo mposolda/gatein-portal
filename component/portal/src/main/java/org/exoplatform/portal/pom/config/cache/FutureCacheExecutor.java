@@ -1,102 +1,79 @@
-/**
- * Copyright (C) 2009 eXo Platform SAS.
- *
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
- */
 package org.exoplatform.portal.pom.config.cache;
 
 import java.io.Serializable;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-import org.exoplatform.container.ExoContainer;
+import org.exoplatform.commons.cache.future.FutureCache;
+import org.exoplatform.commons.cache.future.FutureExoCache;
+import org.exoplatform.commons.cache.future.Loader;
+import org.exoplatform.commons.scope.ScopedKey;
+import org.exoplatform.commons.utils.LazyPageList;
+import org.exoplatform.commons.utils.ListAccessImpl;
 import org.exoplatform.portal.pom.config.POMSession;
 import org.exoplatform.portal.pom.config.POMTask;
 import org.exoplatform.portal.pom.config.TaskExecutionDecorator;
 import org.exoplatform.portal.pom.config.TaskExecutor;
+import org.exoplatform.portal.pom.config.tasks.PortalConfigTask;
+import org.exoplatform.portal.pom.config.tasks.SearchTask;
+import org.exoplatform.portal.pom.data.PortalKey;
+import org.exoplatform.services.cache.ExoCache;
 import org.gatein.common.logging.Logger;
 import org.gatein.common.logging.LoggerFactory;
 
 /**
- * @author <a href="mailto:julien.viet@exoplatform.com">Julien Viet</a>
- * @version $Revision$
+ * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  */
-public class DataCache extends TaskExecutionDecorator {
+public class FutureCacheExecutor extends DataCache {
 
-    /** . */
-    private final Logger log = LoggerFactory.getLogger(DataCache.class);
+    private final Logger log = LoggerFactory.getLogger(FutureCacheExecutor.class);
+    private final FutureCache<ScopedKey<?>, Object, FutureCacheContext> mopFutureCache;
 
-    /** . */
-    private final AtomicLong readCount = new AtomicLong();
-
-    /** . */
-    private boolean cluster = ExoContainer.getProfiles().contains("cluster");
-
-    public DataCache(TaskExecutor next) {
+    public FutureCacheExecutor(ExoCache<ScopedKey<?>, Object> cache, TaskExecutor next) {
         super(next);
+        this.mopFutureCache = new FutureExoCache<ScopedKey<?>, Object, FutureCacheContext>(loader, cache);
     }
 
+    @Override
     public <V> V execute(POMSession session, POMTask<V> task) throws Exception {
+        if (!session.isModified()) {
+            if (task instanceof SearchTask.FindSiteKey) {
+                SearchTask.FindSiteKey find = (SearchTask.FindSiteKey) task;
+                List<PortalKey> data = (List<PortalKey>) mopFutureCache.get(new FutureCacheContext(session, task), ScopedKey.create(find.getKey()));
+                return (V) new LazyPageList<PortalKey>(new ListAccessImpl<PortalKey>(PortalKey.class, data), 10);
+            }
+        }
+
         if (task instanceof CacheableDataTask) {
             CacheableDataTask<?, V> loadTask = (CacheableDataTask<?, V>) task;
+            V result; // super.execute(session, task);
             switch (loadTask.getAccessMode()) {
                 case READ:
-                    return read(session, loadTask);
+                    result = read(session, loadTask);
+                    break;
                 case CREATE:
-                    return create(session, loadTask);
+                    result = create(session, loadTask);
+                    break;
                 case WRITE:
-                    return write(session, loadTask);
+                    result = write(session, loadTask);
+                    break;
                 case DESTROY:
-                    return remove(session, loadTask);
+                    result = remove(session, loadTask);
+                    break;
                 default:
                     throw new UnsupportedOperationException();
             }
-        } else {
-            return super.execute(session, task);
-        }
-    }
 
-    public <V> V executeParent(POMSession session, POMTask<V> task) throws Exception {
-        return super.execute(session, task);
-    }
-
-    protected <K extends Serializable, V> V remove(POMSession session, CacheableDataTask<K, V> task) throws Exception {
-        K key = task.getKey();
-        if (log.isTraceEnabled()) {
-            log.trace("Schedule " + key + " for eviction");
+            if ((!session.isModified()) && (task instanceof PortalConfigTask.Save || task instanceof PortalConfigTask.Remove)) {
+                session.scheduleForEviction(SearchTask.FindSiteKey.PORTAL_KEY);
+                session.scheduleForEviction(SearchTask.FindSiteKey.GROUP_KEY);
+                return result;
+            }
         }
-        session.scheduleForEviction(key);
-        return super.execute(session, task);
-    }
 
-    protected <K extends Serializable, V> V write(POMSession session, CacheableDataTask<K, V> task) throws Exception {
-        K key = task.getKey();
-        if (log.isTraceEnabled()) {
-            log.trace("Schedule " + key + " for eviction");
-        }
-        session.scheduleForEviction(key);
-        return super.execute(session, task);
-    }
-
-    protected <K extends Serializable, V> V create(POMSession session, CacheableDataTask<K, V> task) throws Exception {
-        K key = task.getKey();
-        if (log.isTraceEnabled()) {
-            log.trace("Schedule " + key + " for eviction");
-        }
-        session.scheduleForEviction(key);
-        return super.execute(session, task);
+        //
+        return super.executeParent(session, task);
     }
 
     protected <K extends Serializable, V> V read(POMSession session, CacheableDataTask<K, V> task) throws Exception {
@@ -170,11 +147,34 @@ public class DataCache extends TaskExecutionDecorator {
             }
 
             //
-            return super.execute(session, task);
+            return executeParent(session, task);
         }
     }
 
-    public long getReadCount() {
-        return readCount.longValue();
+
+    private class FutureCacheContext {
+        private POMSession session;
+        private POMTask<? extends Object> task;
+
+        private FutureCacheContext(POMSession session, POMTask<? extends Object> task) {
+            this.session = session;
+            this.task = task;
+        }
     }
+
+    private Loader<ScopedKey<?>, Object, FutureCacheContext> loader = new Loader<ScopedKey<?>, Object, FutureCacheContext>() {
+
+        @Override
+        public Object retrieve(FutureCacheContext context, ScopedKey<?> key) throws Exception {
+            POMTask<?> task = context.task;
+            POMSession session = context.session;
+
+            if (task instanceof SearchTask.FindSiteKey) {
+                LazyPageList<PortalKey> list = (LazyPageList<PortalKey>) FutureCacheExecutor.super.execute(session, task);
+                return Collections.unmodifiableList(new ArrayList<PortalKey>(list.getAll()));
+            } else {
+
+            }
+        }
+    };
 }
