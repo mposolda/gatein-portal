@@ -7,6 +7,7 @@ import javax.security.auth.login.LoginException;
 
 import org.exoplatform.services.log.ExoLogger;
 import org.exoplatform.services.log.Log;
+import org.exoplatform.services.organization.OrganizationService;
 import org.exoplatform.services.security.Authenticator;
 import org.exoplatform.services.security.Credential;
 import org.exoplatform.services.security.Identity;
@@ -44,7 +45,7 @@ public class PSDS2IdentityLoginModule extends org.exoplatform.services.security.
                     return false;
                 }
 
-                Authenticator authenticator = new PSDS2Authenticator();
+                Authenticator authenticator = new PSDS2Authenticator(getContainer());
 
                 Credential[] credentials =
                         new Credential[]{new UsernameCredential(username), new PasswordCredential(password)};
